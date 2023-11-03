@@ -33,10 +33,7 @@ pub unsafe trait SupportsInterfaces {
     fn get_interface_metadata(&self, dyn_interface_id: TypeId) -> Option<BoxedInterfaceMetadata>;
 }
 
-pub fn dyn_cast_box<
-    T: SupportsInterfaces + ?Sized,
-    DynInterface: SupportsInterfaces + ?Sized + 'static, A: Allocator
->(
+pub fn dyn_cast_box<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static, A: Allocator>(
     x: Box<T, A>
 ) -> Option<Box<DynInterface, A>> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
     let metadata = x.get_interface_metadata(TypeId::of::<DynInterface>())?;
@@ -51,7 +48,7 @@ pub fn dyn_cast_box<
     Some(x)
 }
 
-pub fn dyn_cast_ref<T: SupportsInterfaces + ?Sized, DynInterface: SupportsInterfaces + ?Sized + 'static>(
+pub fn dyn_cast_ref<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: &T
 ) -> Option<&DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
     let metadata = x.get_interface_metadata(TypeId::of::<DynInterface>())?;
@@ -66,7 +63,7 @@ pub fn dyn_cast_ref<T: SupportsInterfaces + ?Sized, DynInterface: SupportsInterf
     Some(x)
 }
 
-pub fn dyn_cast_mut<T: SupportsInterfaces + ?Sized, DynInterface: SupportsInterfaces + ?Sized + 'static>(
+pub fn dyn_cast_mut<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: &mut T
 ) -> Option<&mut DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
     let metadata = x.get_interface_metadata(TypeId::of::<DynInterface>())?;
