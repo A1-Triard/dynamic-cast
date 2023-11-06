@@ -3,6 +3,9 @@
 
 #![no_std]
 
+#[doc=include_str!("../README.md")]
+type _DocTestReadme = ();
+
 extern crate alloc;
 
 use alloc::boxed::Box;
