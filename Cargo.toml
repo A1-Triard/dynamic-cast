@@ -1,7 +1,16 @@
 [package]
+edition = "2021"
 name = "dynamic-cast"
 version = "0.1.0"
-edition = "2021"
+#rust-version = "nightly"
+authors = ["warlock <internalmike@gmail.com>"]
+description = "The fifth pillar of OOP: dynamic casting."
+readme = "README.md"
+documentation = "https://docs.rs/dynamic-cast/"
+keywords = ["oop", "dynamic", "cast", "trait", "interface"]
+categories = ["rust-patterns", "no-std"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/A1-Triard/dynamic-cast"
 
 [dependencies]
 arraybox = "0.1.0"
