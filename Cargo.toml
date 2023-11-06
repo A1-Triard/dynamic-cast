@@ -17,4 +17,4 @@ arraybox = "0.1.0"
 downcast-rs = { version = "1.2.0", default-features = false }
 
 [dev-dependencies]
-portrait = "0.3.0"
+portrait = { git = "https://github.com/A1-Triard/portrait.git" }

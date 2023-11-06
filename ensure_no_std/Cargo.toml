@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "ensure_no_std"
+version = "0.0.0"
+publish = false
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+dynamic-cast = { path = ".." }
+composable-allocators = "0.2.9"
+exit-no-std = "0.2.0"
+portrait = { git = "https://github.com/A1-Triard/portrait.git" }
