@@ -14,4 +14,4 @@ panic = "abort"
 dynamic-cast = { path = ".." }
 composable-allocators = "0.2.9"
 exit-no-std = "0.2.0"
-portrait = { git = "https://github.com/A1-Triard/portrait.git" }
+portrait = { git = "https://github.com/SOF3/portrait.git" }
