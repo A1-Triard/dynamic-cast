@@ -9,12 +9,10 @@ type _DocTestReadme = ();
 extern crate alloc;
 
 use alloc::boxed::Box;
-use alloc::rc::Rc;
 use arraybox::{ArrayBox, BufFor};
 use downcast_rs::{Downcast, impl_downcast};
 use core::alloc::Allocator;
 use core::any::TypeId;
-use core::ops::Deref;
 use core::ptr::{self, DynMetadata, Pointee};
 
 #[doc(hidden)]
@@ -41,73 +39,45 @@ pub unsafe trait SupportsInterfaces {
 pub fn dyn_cast_box<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static, A: Allocator>(
     x: Box<T, A>
 ) -> Option<Box<DynInterface, A>> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
-    unsafe { dyn_cast_raw_mut(x, Box::into_raw_with_allocator, Box::from_raw_in) }
-}
-
-pub fn dyn_cast_rc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
-    x: Rc<T>
-) -> Option<Rc<DynInterface>> where
-    DynInterface: Pointee<Metadata=DynMetadata<DynInterface>>,
-    T: Pointee<Metadata=DynMetadata<T>>
-{
-    unsafe { dyn_cast_raw(x, |x| (Rc::into_raw(x), ()), |x, ()| Rc::from_raw(x)) }
+    let metadata = x.get_interface_metadata(TypeId::of::<DynInterface>())?;
+    let metadata = metadata.downcast_ref::<InterfaceMetadata<DynInterface>>()
+        .unwrap_or_else(|| panic!("invalid get_dyn_cast_metadata implementation"))
+        .0
+    ;
+    let (raw_ptr, allocator) = Box::into_raw_with_allocator(x);
+    let raw_ptr = raw_ptr.to_raw_parts().0;
+    let raw_ptr = ptr::from_raw_parts_mut(raw_ptr, metadata);
+    let x = unsafe { Box::from_raw_in(raw_ptr, allocator) };
+    Some(x)
 }
 
 pub fn dyn_cast_ref<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: &T
 ) -> Option<&DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
-    unsafe { dyn_cast_raw(x, |x| (x as *const T, ()), |x, ()| &*x) }
+    let metadata = x.get_interface_metadata(TypeId::of::<DynInterface>())?;
+    let metadata = metadata.downcast_ref::<InterfaceMetadata<DynInterface>>()
+        .unwrap_or_else(|| panic!("invalid get_dyn_cast_metadata implementation"))
+        .0
+    ;
+    let raw_ptr = x as *const T;
+    let raw_ptr = raw_ptr.to_raw_parts().0;
+    let raw_ptr = ptr::from_raw_parts(raw_ptr, metadata);
+    let x = unsafe { &*raw_ptr };
+    Some(x)
 }
 
 pub fn dyn_cast_mut<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: &mut T
 ) -> Option<&mut DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
-    unsafe { dyn_cast_raw_mut(x, |x| (x as *mut T, ()), |x, ()| &mut *x) }
-}
-
-pub unsafe fn dyn_cast_raw_mut<
-    T: SupportsInterfaces + ?Sized,
-    DynInterface: ?Sized + 'static,
-    X: Deref<Target=T>,
-    Y,
-    A
->(
-    x: X,
-    into_raw_parts: fn(X) -> (*mut T, A),
-    from_raw_parts: unsafe fn(*mut DynInterface, A) -> Y
-) -> Option<Y> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
     let metadata = x.get_interface_metadata(TypeId::of::<DynInterface>())?;
     let metadata = metadata.downcast_ref::<InterfaceMetadata<DynInterface>>()
         .unwrap_or_else(|| panic!("invalid get_dyn_cast_metadata implementation"))
         .0
     ;
-    let (raw_ptr, a) = into_raw_parts(x);
+    let raw_ptr = x as *mut T;
     let raw_ptr = raw_ptr.to_raw_parts().0;
     let raw_ptr = ptr::from_raw_parts_mut(raw_ptr, metadata);
-    let x = from_raw_parts(raw_ptr, a);
-    Some(x)
-}
-
-pub unsafe fn dyn_cast_raw<
-    T: SupportsInterfaces + ?Sized,
-    DynInterface: ?Sized + 'static,
-    X: Deref<Target=T>,
-    Y,
-    A
->(
-    x: X,
-    into_raw_parts: fn(X) -> (*const T, A),
-    from_raw_parts: unsafe fn(*const DynInterface, A) -> Y
-) -> Option<Y> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
-    let metadata = x.get_interface_metadata(TypeId::of::<DynInterface>())?;
-    let metadata = metadata.downcast_ref::<InterfaceMetadata<DynInterface>>()
-        .unwrap_or_else(|| panic!("invalid get_dyn_cast_metadata implementation"))
-        .0
-    ;
-    let (raw_ptr, a) = into_raw_parts(x);
-    let raw_ptr = raw_ptr.to_raw_parts().0;
-    let raw_ptr = ptr::from_raw_parts(raw_ptr, metadata);
-    let x = from_raw_parts(raw_ptr, a);
+    let x = unsafe { &mut *raw_ptr };
     Some(x)
 }
 
