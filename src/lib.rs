@@ -10,6 +10,7 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::rc::Rc;
+use alloc::sync::Arc;
 use arraybox::{ArrayBox, BufFor};
 use downcast_rs::{Downcast, impl_downcast};
 use core::alloc::Allocator;
@@ -38,6 +39,18 @@ pub unsafe trait SupportsInterfaces {
     fn get_interface_metadata(&self, dyn_interface_id: TypeId) -> Option<BoxedInterfaceMetadata>;
 }
 
+pub fn dyn_cast_ref<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
+    x: &T
+) -> Option<&DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
+    unsafe { dyn_cast_raw(x, |x| (x as *const T, ()), |x, ()| &*x) }
+}
+
+pub fn dyn_cast_mut<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
+    x: &mut T
+) -> Option<&mut DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
+    unsafe { dyn_cast_raw_mut(x, |x| (x as *mut T, ()), |x, ()| &mut *x) }
+}
+
 pub fn dyn_cast_box<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static, A: Allocator>(
     x: Box<T, A>
 ) -> Option<Box<DynInterface, A>> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
@@ -53,16 +66,13 @@ pub fn dyn_cast_rc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'stati
     unsafe { dyn_cast_raw(x, |x| (Rc::into_raw(x), ()), |x, ()| Rc::from_raw(x)) }
 }
 
-pub fn dyn_cast_ref<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
-    x: &T
-) -> Option<&DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
-    unsafe { dyn_cast_raw(x, |x| (x as *const T, ()), |x, ()| &*x) }
-}
-
-pub fn dyn_cast_mut<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
-    x: &mut T
-) -> Option<&mut DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
-    unsafe { dyn_cast_raw_mut(x, |x| (x as *mut T, ()), |x, ()| &mut *x) }
+pub fn dyn_cast_arc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
+    x: Arc<T>
+) -> Option<Arc<DynInterface>> where
+    DynInterface: Pointee<Metadata=DynMetadata<DynInterface>>,
+    T: Pointee<Metadata=DynMetadata<T>>
+{
+    unsafe { dyn_cast_raw(x, |x| (Arc::into_raw(x), ()), |x, ()| Arc::from_raw(x)) }
 }
 
 pub unsafe fn dyn_cast_raw_mut<
