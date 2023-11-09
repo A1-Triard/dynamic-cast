@@ -183,7 +183,7 @@ pub fn try_get_interface_metadata_for<DynInterface: ?Sized + 'static>(
 
 /// Generates correct [`SupportsInterfaces`] implementation.
 ///
-/// See create README file for example.
+/// See crate README file for example.
 #[macro_export]
 macro_rules! impl_supports_interfaces {
     (
