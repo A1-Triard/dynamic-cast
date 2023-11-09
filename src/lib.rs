@@ -23,40 +23,61 @@ pub use core::any::TypeId as core_any_TypeId;
 #[doc(hidden)]
 pub use core::option::Option as core_option_Option;
 
+/// Stack-allocated [`dyn IsInterfaceMetadata`](IsInterfaceMetadata).
 pub type BoxedInterfaceMetadata =
     ArrayBox<'static, dyn IsInterfaceMetadata, BufFor<InterfaceMetadata<dyn IsInterfaceMetadata>>>
 ;
 
+/// [`InterfaceMetadata`] with erased generic argument.
+///
+/// Supports downcasting back to specific `InterfaceMetadata`.
 pub trait IsInterfaceMetadata: Downcast { }
 
 impl_downcast!(IsInterfaceMetadata);
 
+/// A newtype wrap for [`DynMetadata`].
+///
+/// Designed for type erasure by coercing to [`dyn IsIntefaceMetadata`](IsInterfaceMetadata).
 pub struct InterfaceMetadata<DynInterface: ?Sized>(pub DynMetadata<DynInterface>);
 
 impl<DynInterface: ?Sized + 'static> IsInterfaceMetadata for InterfaceMetadata<DynInterface> { }
 
+/// Provides runtime information about implemented traits.
+///
+/// # Safety
+///
+/// An implementer does not allowed to return from
+/// [`get_interface_metadata`](SupportsInterfaces::get_interface_metadata)
+/// something except `None` in all cases, excluding the case
+/// when `dyn_interface_id` is a type id of `dyn SomeTrait`, and the implementer implements
+/// `SomeTrait`. If `get_interface_metadata` returns `Some(SomeTrait metadata)`, it should return appropriate
+/// correct metadata for `self as dyn SomeTrait` thick pointers.
 pub unsafe trait SupportsInterfaces {
     fn get_interface_metadata(&self, dyn_interface_id: TypeId) -> Option<BoxedInterfaceMetadata>;
 }
 
+/// Runtime-checking safe cast for shared references.
 pub fn dyn_cast_ref<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: &T
 ) -> Option<&DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
     unsafe { dyn_cast_raw(x, |x| (x as *const T, ()), |x, ()| &*x) }
 }
 
+/// Runtime-checking safe cast for unique references.
 pub fn dyn_cast_mut<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: &mut T
 ) -> Option<&mut DynInterface> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
     unsafe { dyn_cast_raw_mut(x, |x| (x as *mut T, ()), |x, ()| &mut *x) }
 }
 
+/// Runtime-checking safe cast for [`Box`]ed objects.
 pub fn dyn_cast_box<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static, A: Allocator>(
     x: Box<T, A>
 ) -> Option<Box<DynInterface, A>> where DynInterface: Pointee<Metadata=DynMetadata<DynInterface>> {
     unsafe { dyn_cast_raw_mut(x, Box::into_raw_with_allocator, Box::from_raw_in) }
 }
 
+/// Runtime-checking safe cast for [`Rc`]ed objects.
 pub fn dyn_cast_rc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: Rc<T>
 ) -> Option<Rc<DynInterface>> where
@@ -66,6 +87,7 @@ pub fn dyn_cast_rc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'stati
     unsafe { dyn_cast_raw(x, |x| (Rc::into_raw(x), ()), |x, ()| Rc::from_raw(x)) }
 }
 
+/// Runtime-checking safe cast for [`Arc`]ed objects.
 pub fn dyn_cast_arc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'static>(
     x: Arc<T>
 ) -> Option<Arc<DynInterface>> where
@@ -75,6 +97,17 @@ pub fn dyn_cast_arc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'stat
     unsafe { dyn_cast_raw(x, |x| (Arc::into_raw(x), ()), |x, ()| Arc::from_raw(x)) }
 }
 
+/// Generic runtime-checking safe cast for mutable smart pointers.
+///
+/// Intended for creating specific casting functions for custom smart pointers.
+///
+/// # Safety
+///
+/// The function converts original smart pointer to a (possibly thick) mutable raw pointer using
+/// the `to_raw_parts` callback,
+/// then forms new thick mutable raw pointer replacing metadata with `DynMetadata<DynInterface>`,
+/// then calls `from_raw_parts` unsafe callback to construct smart pointer from the last pointer.
+/// Calling `dyn_cast_raw_mut` function is safe iff this last `from_raw_parts` call is safe.
 pub unsafe fn dyn_cast_raw_mut<
     T: SupportsInterfaces + ?Sized,
     DynInterface: ?Sized + 'static,
@@ -98,6 +131,17 @@ pub unsafe fn dyn_cast_raw_mut<
     Some(x)
 }
 
+/// Generic runtime-checking safe cast for immutable smart pointers.
+///
+/// Intended for creating specific casting functions for custom smart pointers.
+///
+/// # Safety
+///
+/// The function converts original smart pointer to a (possibly thick) immutable raw pointer using
+/// the `to_raw_parts` callback,
+/// then forms new thick immutable raw pointer replacing metadata with `DynMetadata<DynInterface>`,
+/// then calls `from_raw_parts` unsafe callback to construct smart pointer from the last pointer.
+/// Calling `dyn_cast_raw_mut` function is safe iff this last `from_raw_parts` call is safe.
 pub unsafe fn dyn_cast_raw<
     T: SupportsInterfaces + ?Sized,
     DynInterface: ?Sized + 'static,
@@ -121,6 +165,10 @@ pub unsafe fn dyn_cast_raw<
     Some(x)
 }
 
+/// A base piece for [`SupportsInterfaces::get_interface_metadata`] implementation.
+///
+/// Checks if `dyn_interface_id` is a type id of `DynInterface`, and if so returns appropriate
+/// thick pointer metadata, otherwise returns `None`.
 #[inline]
 pub fn try_get_interface_metadata_for<DynInterface: ?Sized + 'static>(
     dyn_interface_id: TypeId,
@@ -133,6 +181,9 @@ pub fn try_get_interface_metadata_for<DynInterface: ?Sized + 'static>(
     }
 }
 
+/// Generates correct [`SupportsInterfaces`] implementation.
+///
+/// See create README file for example.
 #[macro_export]
 macro_rules! impl_supports_interfaces {
     (
