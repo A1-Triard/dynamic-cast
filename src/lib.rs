@@ -106,8 +106,8 @@ pub fn dyn_cast_arc<T: SupportsInterfaces + ?Sized, DynInterface: ?Sized + 'stat
 /// The function converts original smart pointer to a (possibly thick) mutable raw pointer using
 /// the `into_raw_parts` callback,
 /// then forms new thick mutable raw pointer replacing metadata with `DynMetadata<DynInterface>`,
-/// then calls `from_raw_parts` unsafe callback to construct smart pointer from the last pointer.
-/// Calling `dyn_cast_raw_mut` function is safe iff this last `from_raw_parts` call is safe.
+/// then calls the `from_raw_parts` unsafe callback to construct smart pointer from the last pointer.
+/// Calling the `dyn_cast_raw_mut` function is safe iff this last `from_raw_parts` call is safe.
 pub unsafe fn dyn_cast_raw_mut<
     T: SupportsInterfaces + ?Sized,
     DynInterface: ?Sized + 'static,
@@ -140,8 +140,8 @@ pub unsafe fn dyn_cast_raw_mut<
 /// The function converts original smart pointer to a (possibly thick) immutable raw pointer using
 /// the `into_raw_parts` callback,
 /// then forms new thick immutable raw pointer replacing metadata with `DynMetadata<DynInterface>`,
-/// then calls `from_raw_parts` unsafe callback to construct smart pointer from the last pointer.
-/// Calling `dyn_cast_raw_mut` function is safe iff this last `from_raw_parts` call is safe.
+/// then calls the `from_raw_parts` unsafe callback to construct smart pointer from the last pointer.
+/// Calling the `dyn_cast_raw_mut` function is safe iff this last `from_raw_parts` call is safe.
 pub unsafe fn dyn_cast_raw<
     T: SupportsInterfaces + ?Sized,
     DynInterface: ?Sized + 'static,
