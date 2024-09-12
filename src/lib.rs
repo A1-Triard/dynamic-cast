@@ -11,7 +11,7 @@ extern crate alloc;
 use alloc::boxed::Box;
 use alloc::rc::Rc;
 use alloc::sync::Arc;
-use arraybox::{ArrayBox, BufFor};
+use arraybox::ArrayBox;
 use downcast_rs::{Downcast, impl_downcast};
 use core::alloc::Allocator;
 use core::any::TypeId;
@@ -25,7 +25,7 @@ pub use core::option::Option as core_option_Option;
 
 /// Stack-allocated [`dyn IsInterfaceMetadata`](IsInterfaceMetadata).
 pub type BoxedInterfaceMetadata =
-    ArrayBox<'static, dyn IsInterfaceMetadata, BufFor<InterfaceMetadata<dyn IsInterfaceMetadata>>>
+    ArrayBox<'static, dyn IsInterfaceMetadata, InterfaceMetadata<dyn IsInterfaceMetadata>>
 ;
 
 /// [`InterfaceMetadata`] with erased generic argument.
