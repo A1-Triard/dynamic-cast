@@ -187,6 +187,28 @@ pub fn try_get_interface_metadata_for<DynInterface: ?Sized + 'static>(
 #[macro_export]
 macro_rules! impl_supports_interfaces {
     (
+        $name:ident<$($gen_param:ident $(: $gen_bound:path)?),*> $(: $($($interface:path),+ $(,)?)?)?
+    ) => {
+        unsafe impl<$($gen_param $(: $gen_bound)?),*> $crate::SupportsInterfaces for $name<$($gen_param),*> {
+            fn get_interface_metadata(
+                &self,
+                dyn_interface_id: $crate::core_any_TypeId
+            ) -> $crate::core_option_Option<$crate::BoxedInterfaceMetadata> {
+                $($($(
+                    if let $crate::core_option_Option::Some(metadata) =
+                        $crate::try_get_interface_metadata_for::<dyn $interface>(
+                            dyn_interface_id, self
+                        )
+                    {
+                        return $crate::core_option_Option::Some(metadata);
+                    }
+                )+)?)?
+                None
+            }
+        }
+    };
+
+    (
         $name:ty $(: $($($interface:path),+ $(,)?)?)?
     ) => {
         unsafe impl $crate::SupportsInterfaces for $name {
