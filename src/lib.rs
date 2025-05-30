@@ -203,7 +203,7 @@ macro_rules! impl_supports_interfaces {
                         return $crate::core_option_Option::Some(metadata);
                     }
                 )+)?)?
-                None
+                $crate::core_option_Option::None
             }
         }
     };
@@ -226,7 +226,7 @@ macro_rules! impl_supports_interfaces {
                         return $crate::core_option_Option::Some(metadata);
                     }
                 )+)?)?
-                None
+                $crate::core_option_Option::None
             }
         }
     };
