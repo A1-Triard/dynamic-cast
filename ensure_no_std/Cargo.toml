@@ -12,6 +12,6 @@ panic = "abort"
 
 [dependencies]
 dynamic-cast = { path = ".." }
-composable-allocators = "0.2.9"
+composable-allocators = "0.3.4"
 exit-no-std = "0.2.1"
 portrait = { git = "https://github.com/SOF3/portrait.git" }
