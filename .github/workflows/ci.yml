@@ -24,6 +24,10 @@ jobs:
         toolchain: nightly
         override: true
     - run: "rustup component add clippy"
+    - run: "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash"
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+    - run: "cargo binstall cargo-outdated"
+      if: ${{ matrix.os == 'ubuntu-latest' }}
     - uses: actions/checkout@v3
     - run: "cargo build --verbose"
     - run: "cargo test --verbose --tests"
